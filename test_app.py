@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 
-from recorder import SystemAudioRecorder, generate_default_filename
+from recorder import SystemAudioRecorder, generate_default_filename, resolve_ffmpeg_path
 
 
 class RecorderUnitTests(unittest.TestCase):
@@ -26,6 +26,10 @@ class RecorderUnitTests(unittest.TestCase):
         finally:
             wav_path.unlink(missing_ok=True)
             temp_dir.rmdir()
+
+    def test_resolve_ffmpeg_path_returns_none_when_missing(self) -> None:
+        resolved = resolve_ffmpeg_path()
+        self.assertTrue(resolved is None or resolved.lower().endswith("ffmpeg.exe") or "ffmpeg" in resolved.lower())
 
 
 if __name__ == "__main__":

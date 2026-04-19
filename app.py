@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import platform
+import sys
 import tkinter as tk
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,7 +26,7 @@ class RecorderApp:
         self.root.geometry("560x260")
         self.root.resizable(False, False)
 
-        default_dir = str((Path.cwd() / "recordings").resolve())
+        default_dir = str((self._default_output_root() / "recordings").resolve())
         self.state = AppState(
             is_recording=False,
             output_dir=default_dir,
@@ -88,6 +89,11 @@ class RecorderApp:
 
         frame.columnconfigure(1, weight=1)
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def _default_output_root(self) -> Path:
+        if getattr(sys, "frozen", False):
+            return Path(sys.executable).resolve().parent
+        return Path.cwd()
 
     def _validate_environment(self) -> None:
         if platform.system() != "Windows":

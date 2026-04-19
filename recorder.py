@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
 import threading
 import wave
 from dataclasses import dataclass
@@ -27,14 +28,33 @@ class DependencyStatus:
     ffmpeg_path: Optional[str]
 
 
+def _runtime_root() -> Path:
+    if getattr(sys, "frozen", False):
+        return Path(getattr(sys, "_MEIPASS", Path(sys.executable).resolve().parent))
+    return Path(__file__).resolve().parent
+
+
+def resolve_ffmpeg_path() -> Optional[str]:
+    candidates = [
+        _runtime_root() / "ffmpeg.exe",
+        Path(sys.executable).resolve().parent / "ffmpeg.exe",
+    ]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate)
+
+    return shutil.which("ffmpeg")
+
+
 def check_dependencies() -> DependencyStatus:
     missing: list[str] = []
     if sc is None:
         missing.append("Python 패키지 'soundcard'")
 
-    ffmpeg_path = shutil.which("ffmpeg")
+    ffmpeg_path = resolve_ffmpeg_path()
     if ffmpeg_path is None:
-        missing.append("FFmpeg 실행 파일")
+        missing.append("FFmpeg 실행 파일 또는 번들된 ffmpeg.exe")
 
     if missing:
         joined = ", ".join(missing)
@@ -42,7 +62,8 @@ def check_dependencies() -> DependencyStatus:
             ready=False,
             message=(
                 "앱을 실행하려면 다음 의존성이 필요합니다: "
-                f"{joined}. `pip install soundcard` 후 FFmpeg를 PATH에 추가해 주세요."
+                f"{joined}. 개발 환경에서는 `pip install soundcard` 후 FFmpeg를 PATH에 추가하거나, "
+                "배포용 EXE 빌드에서는 ffmpeg.exe를 함께 번들해 주세요."
             ),
             ffmpeg_path=ffmpeg_path,
         )
@@ -205,7 +226,7 @@ class SystemAudioRecorder:
             wav_file.writeframes(raw_bytes)
 
     def _encode_mp3(self, wav_path: Path, output_path: Path) -> None:
-        ffmpeg_path = shutil.which("ffmpeg")
+        ffmpeg_path = resolve_ffmpeg_path()
         if ffmpeg_path is None:
             raise RecorderError("FFmpeg를 찾지 못해 MP3로 변환할 수 없습니다.")
 

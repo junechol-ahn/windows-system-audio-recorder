@@ -3,3 +3,5 @@ __pycache__/
 .tmp-tests/
 recordings/
 *.recording-temp.wav
+build/
+dist/
