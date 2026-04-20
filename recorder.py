@@ -13,7 +13,7 @@ import numpy as np
 
 try:
     import soundcard as sc
-except ImportError:  # pragma: no cover - handled by dependency checks
+except (ImportError, OSError):  # pragma: no cover - handled by dependency checks
     sc = None
 
 
