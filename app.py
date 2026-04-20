@@ -112,9 +112,30 @@ class RecorderApp:
             messagebox.showwarning("의존성 필요", dependency_status.message)
 
     def choose_directory(self) -> None:
-        selected = filedialog.askdirectory(initialdir=self.output_dir_var.get() or str(Path.cwd()))
+        initial_dir = self._resolve_initial_directory(self.output_dir_var.get())
+        selected = filedialog.askdirectory(
+            parent=self.root,
+            initialdir=initial_dir,
+            mustexist=True,
+            title="저장 폴더 선택",
+        )
         if selected:
             self.output_dir_var.set(selected)
+            self._clear_error()
+
+    @staticmethod
+    def _resolve_initial_directory(raw_path: str) -> str:
+        candidate = raw_path.strip()
+        if candidate:
+            path = Path(candidate).expanduser()
+            if path.is_dir():
+                return str(path)
+
+        home = Path.home()
+        if home.is_dir():
+            return str(home)
+
+        return str(Path.cwd())
 
     def reset_filename(self) -> None:
         self.filename_var.set(generate_default_filename())
